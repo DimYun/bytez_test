@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <title>Rendering Granules Images Using FastAPI</title>
+  </head>
+  <body>
+    <h1>Dataset GOA-1 API</h1>
+
+    <h2>You can test our API here or use it directly with relevant GET and POST requests</h2>
+
+    <form action="/goa/show_goa" enctype="multipart/form-data" method="GET">
+      <label for="goa_number">Select GOA image number:</label>
+      <input type="number" id="goa_number" name="goa_number" min="1" max="3472">
+      <input type="submit">
+    </form>
+
+    <h3>or</h3>
+
+    <form action="/goa/dynamic" enctype="multipart/form-data" method="POST">
+      <input name="content_image" type="file" />
+      <input type="submit" />
+    </form>
+
+    {% if img %}
+      <h2>Rendered Image</h2>
+      <img src="data:image/jpeg;base64,{{ img }}" >
+      {% else %}
+      <h2>Image will be render here...</h2>
+    {% endif %}
+
+    {% if mask %}
+      <h2>Rendered Mask</h2>
+      <img src="data:image/jpeg;base64,{{ mask }}" />
+      {% else %}
+      <h2>Mask will be render here...</h2>
+      {% endif %}
+
+  </body>
+</html>

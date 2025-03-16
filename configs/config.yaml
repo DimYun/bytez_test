@@ -1,0 +1,21 @@
+title: "Test article analyzer"
+description: ""
+summary: "API for scientific article analyser"
+version: "2025.00.1"
+terms_of_service: "Test task"
+contact: {
+    "name": "Dmitrii Iunovidov",
+    "url": "https://dimyun.space/",
+    "email": "Dm.Yunovidov@gmail.com",
+}
+license_info: {
+    "name": "MIT",
+    "url": "https://spdx.org/licenses/MIT.html",
+}
+
+goa_uploader:
+  goa_path: 'data/'
+
+content_process:
+  dir_path: 'api_test_dir'
+  dir_upload: 'uploaded_imgs'
