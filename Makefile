@@ -1,20 +1,37 @@
+.PHONY: *
+
+VENV=/opt/python_venvs/articles_api
+PYTHON=$(VENV)/bin/python3
+PIP=$(VENV)/bin/pip
+
 DEPLOY_HOST := 93.123.95.160
 SSH_PORT := 2122
-APP_PORT := 5043
+APP_PORT := 5045
 DOCKER_TAG := latest
-DOCKER_IMAGE := goa
-DVC_REMOTE_NAME := dvc_models_goa
+DOCKER_IMAGE := articles_api
+#DVC_REMOTE_NAME := dvc_models_goa
 USERNAME := dmitriy
 
 
-.PHONY: run_app
-run_app:
-	python3 -m uvicorn app:create_app --host='0.0.0.0' --port=$(APP_PORT) --root-path /goa
+# ================== LOCAL WORKSPACE SETUP ==================
+venv:
+	~/.pyenv/versions/3.9.17/bin/python -m venv $(VENV)
+	@echo 'Path to Python executable $(shell pwd)/$(PYTHON)'
 
 .PHONY: install
-install:
-	pip install -r requirements.txt
+install: venv
+	@echo "=== Installing common dependencies ==="
+	$(PIP) install --upgrade pip
+	$(PIP) install -r requirements.txt
 
+
+# ================== LOCAL WORKSPACE SETUP ==================
+.PHONY: run_app
+run_app:
+	$(PYTHON) -m uvicorn app:create_app --host='0.0.0.0' --port=$(APP_PORT) --root-path /
+
+
+# ================== LOCAL WORKSPACE SETUP ==================
 .PHONY: download_model
 download_model:
 	dvc remote modify --local $(DVC_REMOTE_NAME) keyfile ~/.ssh/id_rsa
