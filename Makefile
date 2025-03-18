@@ -23,6 +23,9 @@ install: venv
 	@echo "=== Installing common dependencies ==="
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
+	curl -fsSL https://ollama.com/install.sh | sh
+	/usr/local/bin/ollama pull llama3
+	/usr/local/bin/ollama pull bge-m3
 
 
 # ================== LOCAL WORKSPACE SETUP ==================

@@ -18,6 +18,9 @@ uvicorn
 wemake-python-styleguide
 tox
 Jinja2
-fpdf2
 pymupdf
 python-multipart
+langchain
+langchain-community
+pypdf
+docarray
