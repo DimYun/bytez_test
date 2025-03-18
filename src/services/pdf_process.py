@@ -1,13 +1,11 @@
 """Module for define APP plate process."""
 
-import zipfile
 import io
 import base64
 
-import os
 import typing as tp
-from pathlib import Path
 import pymupdf
+from tqdm import tqdm
 
 
 from src.services.utils import PDFSimplePredictor, PDFDLPredictor
@@ -90,17 +88,6 @@ class ProcessPDF:
                 pages_data[-1]["title"].append("Heading")
                 pages_data[-1]["title"].append("Header")
 
-            # if len(page.objects['line']) == 1 or len(page.objects['line']) % 2 == 1:
-            #     pages_data[-1]["title"].append("Footnote")
-
-            # is_bold_char = 0
-            # for i in page.objects['char']:
-            #     if 'Bold' in i['fontname']:
-            #         is_bold_char += 1
-            # if is_bold_char:
-            #     pages_data[-1]["title"].append("Heading")
-            #     pages_data[-1]["title"].append("Header")
-
             page_text = page.get_text('text')
             if page_i == 0:
                 pages_data[-1]["title"].append("Title")
@@ -147,20 +134,57 @@ class ProcessPDF:
     async def pdf_llm_process(
         self,
         pdf_url_or_filename: str,
-    ) -> tp.List[tp.Dict[str, tp.List[tp.Any]]]:
+    ) -> tp.List[tp.Dict[str, tp.List[str]]]:
 
         loader = PyMuPDFLoader(pdf_url_or_filename)
-        doc = loader.load()
+        doc = await loader.aload()
 
         pages_data = []
-        # TODO: refactor pdf text to sentences?
-        for page_i, page in enumerate(doc):
+        questions = [
+            'Is it any title?',
+            'Is it any authors?',
+            'Is it any abstract?',
+            'Is it any header?',
+            'Is it any footer?',
+            'Is it any paragraphs?',
+            'Is it any images?',
+            'Is it any captions?',
+            'Is it any tables?',
+            'Is it any references as single section?',
+            'Is it any standalone?',
+            'Is it any math formula?',
+            'Is it divider for main text?',
+            'Is it table of context?',
+        ]
+        data_mask = [
+            "Title",
+            "Authors",
+            "Abstract",
+            "Header",
+            "Footer",
+            "Paragraph",
+            "Image",
+            "Caption",
+            "Tables",
+            "References",
+            "Standalone",
+            "Math",
+            "Divider",
+            "TOC",
+        ]
+        for page_i, page in enumerate(tqdm(doc)):
             pages_data.append(
                 {
                     "title": []
                 }
             )
-            self.pdf_dl_predictor.answer_for_pdf_page(page)
-            page_text = page.get_text('text')
+            llm_answers_page = self.pdf_dl_predictor.answer_for_pdf_page(
+                page, questions
+            )
+            print(llm_answers_page)
+            for answer_i, answer in enumerate(llm_answers_page):
+                if answer_i < len(data_mask):
+                    if 'yes' in answer.lower():
+                        pages_data[-1]["title"].append(data_mask[answer_i])
 
-
+        return pages_data

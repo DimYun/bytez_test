@@ -8,10 +8,6 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import base
-from llama_index.core.node_parser import SentenceSplitter
-
-from sys import argv
-import pymupdf
 
 
 class PDFSimplePredictor:
@@ -30,15 +26,15 @@ class PDFDLPredictor:
         self.embeddings = OllamaEmbeddings(model='bge-m3')
 
     def format_docs(
-            self,
-            docs: tp.List[base.Document]
+        self,
+        docs: tp.List[base.Document]
     ) -> str:
         return "\n\n".join(doc.page_content for doc in docs)
 
     def answer_for_pdf_page(
-            self,
-            page: base.Document,
-            questions_list: tp.List[str],
+        self,
+        page: base.Document,
+        questions_list: tp.List[str],
     ) -> tp.List[str]:
         # Load the PDF file and create a retriever to be used for providing context
         store = DocArrayInMemorySearch.from_documents(
@@ -48,8 +44,15 @@ class PDFDLPredictor:
 
         # Create the prompt template
         template = """
-        Answer the question based only on the context provided. 
+        Answer the question based only on the context provided, each question separate with ";". 
+        IT SHOULD BE 14 ANSWERS. PLACE * SYMBOL AT THE END OF EACH ANSWER.
         It is scientific article and you need to find specific text and image elements in it.
+
+        For example:
+        Question: "Is it any data?"
+        Output: "Is it any data?; Yes *"
+        
+        Respond with ONLY questions, answers and * symbols, with no additional commentary.
 
         Context: {context}
 
@@ -59,17 +62,17 @@ class PDFDLPredictor:
 
         # Build the chain of operations
         chain = (
-                {
-                    'context': retriever | self.format_docs,
-                    'question': RunnablePassthrough(),
-                }
-                | prompt
-                | self.llm
-                | StrOutputParser()
+            {
+                'context': retriever | self.format_docs,
+                'question': RunnablePassthrough(),
+            }
+            | prompt
+            | self.llm
+            | StrOutputParser()
         )
 
         # Start asking questions and getting answers in a loop
-        answers_list = []
-        for question in questions_list:
-            answers_list.append(str(chain.invoke({'question': question})).split('.')[0])
+        question = ';'.join(questions_list)
+        answers_list = str(chain.invoke({'question': question})).split('*')
+
         return answers_list

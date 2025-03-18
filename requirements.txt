@@ -22,5 +22,6 @@ pymupdf
 python-multipart
 langchain
 langchain-community
-pypdf
 docarray
+tqdm
+aiofiles
