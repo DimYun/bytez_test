@@ -20,4 +20,3 @@ def test_process_pdf(client: TestClient, sample_pdf_bytes: bytes):
     predicted_output = response.json()["data"]
     assert isinstance(predicted_output, str)
     assert int(predicted_output) == 32
-
