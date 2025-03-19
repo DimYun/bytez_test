@@ -1,7 +1,7 @@
 import typing as tp
 import pymupdf
 from tqdm import tqdm
-from src.services.utils import PDFSimplePredictor, PDFDLPredictor
+from src.services.pdf_utils import PDFSimplePredictor, PDFDLPredictor
 from langchain_community.document_loaders import PyMuPDFLoader
 
 
@@ -24,11 +24,10 @@ class ProcessPDF:
         pdf_name: str,
         pdf_bytes: bytes,
     ) -> pymupdf.Document:
-        doc = pymupdf.open(
+        return pymupdf.open(
             filename=pdf_name,
-            stream=pdf_bytes
+            stream=pdf_bytes,
         )
-        return doc
 
     def count_pdf_pages(
         self,
@@ -93,7 +92,6 @@ class ProcessPDF:
             )
             print(llm_answers_page)
             for answer_i, answer in enumerate(llm_answers_page):
-                if answer_i < len(self.config['data_mask']):
-                    if not 'No' in answer:
-                        pages_data[-1]["title"].append(self.config['data_mask'][answer_i])
+                if answer_i < len(self.config['data_mask']) and 'No' not in answer:
+                    pages_data[-1]["title"].append(self.config['data_mask'][answer_i])
         return pages_data

@@ -11,9 +11,6 @@ import base64
 
 
 class PDFSimplePredictor:
-    def __init__(self):
-        pass
-
     def parse_pdf(
         self,
         page_number: int,
@@ -26,7 +23,7 @@ class PDFSimplePredictor:
             page_data.append("Footer")
 
         page_blocks = page_content.get_text('blocks')
-        if len(page_blocks) > 0:
+        if page_blocks:
             page_data.append("Paragraph")
 
         imgblocks = ['Fig' in i[-3] for i in page_blocks]
@@ -46,7 +43,7 @@ class PDFSimplePredictor:
         if 'Fig' in page_text or 'Pic' in page_text:
             page_data.append("Caption")
 
-        if len(list(page_content.find_tables())) > 0:
+        if list(page_content.find_tables()):
             page_data.append("Tables")
         return page_data
 
@@ -60,7 +57,7 @@ class PDFSimplePredictor:
             "table_images": [],
         }
         tabs = page_content.find_tables()
-        if len(list(tabs)) > 0:
+        if list(tabs):
             pix = page_content.get_pixmap().pil_image()
             for tab in tabs:
                 x_min, y_min, x_max, y_max = tab.bbox
@@ -95,9 +92,7 @@ class PDFDLPredictor:
             [page], embedding=self.embeddings
         )
         retriever = store.as_retriever()
-
         prompt = PromptTemplate.from_template(self.config['llm_template'])
-
         chain = (
             {
                 'context': retriever | self.format_docs,
@@ -107,8 +102,5 @@ class PDFDLPredictor:
             | self.llm
             | StrOutputParser()
         )
-
         question = ';'.join(questions_list)
-        answers_list = str(chain.invoke({'question': question})).split('*')
-
-        return answers_list
+        return str(chain.invoke({'question': question})).split('*')

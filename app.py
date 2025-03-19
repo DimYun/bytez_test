@@ -1,4 +1,3 @@
-"""Main module for FastAPI car plates service."""
 import argparse
 
 import uvicorn
@@ -6,7 +5,7 @@ from fastapi import FastAPI
 from omegaconf import OmegaConf
 
 from src.containers.containers import Container
-from src.routes import test_routs as test_routs
+from src.routes import test_routs
 from src.routes.routers import router as app_router
 
 
@@ -29,7 +28,7 @@ Science article parser API.
 
 You can:
 
-* respond with "hello world" when the "/" endpoint is hit 
+* respond with "hello world" when the "/" endpoint is hit
 * accept a PDF file upload and return the number of pages in the document
 * accept a link to an Arxiv research paper and return the text content of each page as a JSON array
 * classify content blocks within each page of the PDF with rule-based engine
@@ -45,7 +44,7 @@ You can:
         contact=cfg['contact'],
         license_info=cfg['license_info'],
     )
-    app.include_router(app_router)  #, prefix="/", tags=["articles"])
+    app.include_router(app_router)
     return app
 
 
@@ -56,6 +55,6 @@ if __name__ == "__main__":
         parser.add_argument("port", type=int, help="port number")
         return parser.parse_args()
 
-    app = create_app()
+    init_app = create_app()
     args = arg_parse()
-    uvicorn.run(app, port=args.port, host="127.0.0.1")
+    uvicorn.run(init_app, port=args.port, host="127.0.0.1")

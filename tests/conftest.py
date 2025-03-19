@@ -4,7 +4,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from omegaconf import OmegaConf
-import typing as tp
 import pymupdf
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_core.documents import base

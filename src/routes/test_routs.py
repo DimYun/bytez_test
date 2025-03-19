@@ -1,6 +1,3 @@
-"""Module for FastAPI requests infrastructure"""
-from typing import Union
-
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, File, UploadFile, Request, status
 from fastapi.templating import Jinja2Templates
@@ -18,6 +15,7 @@ import typing as tp
 
 
 templates = Jinja2Templates(directory="templates")
+# TODO; finish with demo
 
 
 @router.get("/demo")
@@ -64,8 +62,9 @@ async def process_content_url(
 ) -> tp.Dict[str, tp.Any]:
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(None, requests.get, arxiv_url)
+    arxiv_pdf_name = arxiv_url.split('/')[-1]
     pages_data = pdf_processor.test_pdf_pages(
-        pdf_name=f"{arxiv_url.split('/')[-1]}.pdf",
+        pdf_name=f"{arxiv_pdf_name}.pdf",
         pdf_bytes=io.BytesIO(response.content)
     )
     return {
@@ -86,7 +85,8 @@ async def process_rule_based(
     pdf_processor: ProcessPDF = Depends(Provide[Container.pdf_processor]),
 ) -> tp.Dict[str, tp.Any]:
     data_bytes = None
-    pdf_name = f"{arxiv_url.split('/')[-1]}.pdf"
+    arxiv_pdf_name = arxiv_url.split('/')[-1]
+    pdf_name = f"{arxiv_pdf_name}.pdf"
     if in_file is not None and not isinstance(in_file, str):
         pdf_name = in_file.filename
         data_bytes = await in_file.read()
@@ -96,14 +96,15 @@ async def process_rule_based(
         response = await loop.run_in_executor(None, requests.get, arxiv_url)
         data_bytes = io.BytesIO(response.content)
     classification_output = pdf_processor.simple_pdf_process(
-        pdf_name = pdf_name,
-        pdf_bytes = data_bytes
+        pdf_name=pdf_name,
+        pdf_bytes=data_bytes
     )
     return {
         "code": "200",
         "data": classification_output,
         "error": "No Errors",
     }
+
 
 @router.post("/process_tables")
 @inject
@@ -116,7 +117,8 @@ async def process_tables(
     pdf_processor: ProcessPDF = Depends(Provide[Container.pdf_processor]),
 ) -> tp.Dict[str, tp.Any]:
     data_bytes = None
-    pdf_name = f"{arxiv_url.split('/')[-1]}.pdf"
+    arxiv_pdf_name = arxiv_url.split('/')[-1]
+    pdf_name = f"{arxiv_pdf_name}.pdf"
     if in_file is not None and not isinstance(in_file, str):
         pdf_name = in_file.filename
         data_bytes = await in_file.read()
@@ -126,14 +128,15 @@ async def process_tables(
         response = await loop.run_in_executor(None, requests.get, arxiv_url)
         data_bytes = io.BytesIO(response.content)
     tables_output = pdf_processor.table_pdf_process(
-        pdf_name = pdf_name,
-        pdf_bytes = data_bytes
+        pdf_name=pdf_name,
+        pdf_bytes=data_bytes
     )
     return {
         "code": "200",
         "data": tables_output,
         "error": "No Errors",
     }
+
 
 @router.post("/process_llm_rag")
 @inject
@@ -149,10 +152,10 @@ async def process_llm_rag(
     if in_file is not None and not isinstance(in_file, str):
         pdf_url_or_filename = in_file.filename
         async with aiofiles.open(pdf_url_or_filename, 'wb') as out_file:
-            content = await in_file.read()
-            await out_file.write(content)
+            pdf_content = await in_file.read()
+            await out_file.write(pdf_content)
     tables_output = await pdf_processor.pdf_llm_process(
-        pdf_url_or_filename = pdf_url_or_filename,
+        pdf_url_or_filename=pdf_url_or_filename,
     )
     # TODO: delete or save files to DB
     return {

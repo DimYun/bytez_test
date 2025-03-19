@@ -1,5 +1,6 @@
 .PHONY: *
 
+SYSTEM_PYTHON=python3  #~/.pyenv/versions/3.9.17/bin/python
 VENV=/opt/python_venvs/articles_api
 PYTHON=$(VENV)/bin/python3
 PIP=$(VENV)/bin/pip
@@ -9,12 +10,13 @@ SSH_PORT := 2122
 APP_PORT := 5045
 DOCKER_TAG := latest
 DOCKER_IMAGE := articles_api
+DOCKER_NAME := pdf_parcer
 USERNAME := dmitriy
 
 
 # ================== LOCAL WORKSPACE SETUP ==================
 venv:
-	~/.pyenv/versions/3.9.17/bin/python -m venv $(VENV)
+	$(SYSTEM_PYTHON) -m venv $(VENV)
 	@echo 'Path to Python executable $(shell pwd)/$(PYTHON)'
 
 .PHONY: install
@@ -24,10 +26,9 @@ install: venv
 	$(PIP) install -r requirements.txt
 	curl -fsSL https://ollama.com/install.sh | sh
 
-.PHONY: download_model
-download_model:
-	/usr/local/bin/ollama pull llama3
-	/usr/local/bin/ollama pull bge-m3
+.PHONY: download_models
+download_models:
+	/bin/bash ollama_pull_models.sh
 
 
 # ================== RUN API SERVICE ==================
@@ -52,7 +53,7 @@ run_all_tests:
 
 .PHONY: generate_coverage_report
 generate_coverage_report:
-	PYTHONPATH=. pytest --cov=src --cov-report html  tests/
+	PYTHONPATH=. $(VENV)/bin/pytest --cov=src --cov-report html  tests/
 
 .PHONY: lint
 lint:
@@ -66,7 +67,13 @@ build:
 
 .PHONY: docker_run
 docker_run:
-	docker run -p $(APP_PORT):$(APP_PORT) -d --name goa $(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker run --gpus all --shm-size=8g  -p $(APP_PORT):$(APP_PORT) -d --name $(DOCKER_NAME) $(DOCKER_IMAGE):$(DOCKER_TAG)
+
+.PHONY: run_app_docker
+run_app_docker:
+	ollama serve &
+	sleep 5
+	make run_app
 
 .PHONY: install_c_libs
 install_c_libs:

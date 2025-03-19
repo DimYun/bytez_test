@@ -1,10 +1,7 @@
-from copy import deepcopy
-from langchain_core.documents import base
 import typing as tp
 import pymupdf
 from langchain_core.documents import base
 from src.containers.containers import Container
-
 
 
 class FakePDFSimplePredictor:
@@ -52,14 +49,14 @@ def test_simple_parce_not_fail(
 
 def test_llm_parce_not_fail(
     app_container: Container,
-    sample_pdf_page: base.Document,
+    sample_pdf_page_llm: base.Document,
 ) -> None:
     with app_container.reset_singletons():
         with app_container.pdf_dl_predictor.override(FakePDFDLPredictor()):
             pdf_dl_predictor = app_container.pdf_dl_predictor()
             pdf_dl_predictor.answer_for_pdf_page(
                 questions_list=["test?"],
-                page=sample_pdf_page
+                page=sample_pdf_page_llm
             )
 
 
