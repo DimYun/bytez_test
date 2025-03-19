@@ -39,11 +39,11 @@ run_app:
 # ================== RUN TESTS ==================
 .PHONY: run_unit_tests
 run_unit_tests:
-	PYTHONPATH=. pytest tests/unit/
+	PYTHONPATH=. $(VENV)/bin/pytest tests/unit/
 
 .PHONY: run_integration_tests
 run_integration_tests:
-	PYTHONPATH=. pytest tests/integration/
+	PYTHONPATH=. $(VENV)/bin/pytest tests/integration/
 
 .PHONY: run_all_tests
 run_all_tests:

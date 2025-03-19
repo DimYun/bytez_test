@@ -2,7 +2,7 @@
 from typing import Union
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import Depends, File, UploadFile, Request, Response, HTTPException, status
+from fastapi import Depends, File, UploadFile, Request, status
 from fastapi.templating import Jinja2Templates
 
 import requests

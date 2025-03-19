@@ -1,7 +1,10 @@
 from copy import deepcopy
 from langchain_core.documents import base
 import typing as tp
+import pymupdf
+from langchain_core.documents import base
 from src.containers.containers import Container
+
 
 
 class FakePDFSimplePredictor:
@@ -27,8 +30,8 @@ class FakePDFDLPredictor:
     """Fake Plate response for tests"""
     def answer_for_pdf_page(
             self,
-            page: base.Document,
             questions_list: tp.List[str],
+            page: base.Document,
     ) -> tp.List[str]:
         answers = []
         for question in questions_list:
@@ -38,47 +41,59 @@ class FakePDFDLPredictor:
 
 def test_simple_parce_not_fail(
     app_container: Container,
-    sample_image_np: np.ndarray
+    sample_pdf_page: pymupdf.Page,
 ) -> None:
     with app_container.reset_singletons():
         with app_container.pdf_simple_predictor.override(FakePDFSimplePredictor()):
-            plate_analytics = app_container.content_process()
-            plate_analytics.process(sample_image_np, "test")
+            pdf_simple_predictor = app_container.pdf_simple_predictor()
+            pdf_simple_predictor.parse_pdf(1, sample_pdf_page)
+            pdf_simple_predictor.parse_tables(sample_pdf_page)
 
 
-def test_prob_less_or_equal_to_one(
+def test_llm_parce_not_fail(
     app_container: Container,
-    sample_image_np: np.ndarray,
+    sample_pdf_page: base.Document,
 ) -> None:
-    """
-    Test that the pedicted value didn't exeed 10 characters
-    :param app_container: container with application
-    :param sample_image_np: input image
-    :return:
-    """
     with app_container.reset_singletons():
-        with app_container.content_process.override(FakePlateClassifier()):
-            plate_analytics = app_container.content_process()
-            plate2prob = plate_analytics.process(sample_image_np, "test")
-            for prob in plate2prob['plates']:
-                assert len(prob['value']) <= 10
-                assert len(prob['value'])
+        with app_container.pdf_dl_predictor.override(FakePDFDLPredictor()):
+            pdf_dl_predictor = app_container.pdf_dl_predictor()
+            pdf_dl_predictor.answer_for_pdf_page(
+                questions_list=["test?"],
+                page=sample_pdf_page
+            )
 
 
-def test_predict_dont_mutate_initial_image(
+def test_process_pdf_not_fail(
     app_container: Container,
-    sample_image_np: np.ndarray,
+    sample_pdf_bytes: bytes,
 ) -> None:
-    """
-    Test that we didn't change image
-    :param app_container: container with application
-    :param sample_image_np: input image
-    :return:
-    """
-    with app_container.reset_singletons():
-        with app_container.content_process.override(FakePlateClassifier()):
-            initial_image = deepcopy(sample_image_np)
-            plate_analytics = app_container.content_process()
-            plate_analytics.process(sample_image_np, "test")
+    pdf_load = app_container.pdf_processor()
+    doc = pdf_load.process_pdf(
+        pdf_name='test.pdf',
+        pdf_bytes=sample_pdf_bytes,
+    )
+    assert len(doc) == 32
 
-            assert np.allclose(initial_image, sample_image_np)
+
+def test_count_pdf_pages_not_fail(
+    app_container: Container,
+    sample_pdf_bytes: bytes,
+) -> None:
+    pdf_count_pages = app_container.pdf_processor()
+    pdf_pages = pdf_count_pages.count_pdf_pages(
+        pdf_name='test.pdf',
+        pdf_bytes=sample_pdf_bytes,
+    )
+    assert pdf_pages == 32
+
+
+def test_test_pdf_pages_not_fail(
+    app_container: Container,
+    sample_pdf_bytes: bytes,
+) -> None:
+    pdf_load_pages = app_container.pdf_processor()
+    pdf_pages_texts = pdf_load_pages.test_pdf_pages(
+        pdf_name='test.pdf',
+        pdf_bytes=sample_pdf_bytes,
+    )
+    assert isinstance(pdf_pages_texts[0], str)
