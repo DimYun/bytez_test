@@ -9,7 +9,6 @@ SSH_PORT := 2122
 APP_PORT := 5045
 DOCKER_TAG := latest
 DOCKER_IMAGE := articles_api
-#DVC_REMOTE_NAME := dvc_models_goa
 USERNAME := dmitriy
 
 
@@ -24,27 +23,20 @@ install: venv
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
 	curl -fsSL https://ollama.com/install.sh | sh
+
+.PHONY: download_model
+download_model:
 	/usr/local/bin/ollama pull llama3
 	/usr/local/bin/ollama pull bge-m3
 
 
-# ================== LOCAL WORKSPACE SETUP ==================
+# ================== RUN API SERVICE ==================
 .PHONY: run_app
 run_app:
 	$(PYTHON) -m uvicorn app:create_app --host='0.0.0.0' --port=$(APP_PORT) --root-path /
 
 
-# ================== LOCAL WORKSPACE SETUP ==================
-.PHONY: download_model
-download_model:
-	dvc remote modify --local $(DVC_REMOTE_NAME) keyfile ~/.ssh/id_rsa
-	dvc pull
-
-.PHONY: download_model_manual
-download_model_manual:
-	dvc remote modify --local $(DVC_REMOTE_NAME) ask_passphrase true
-	dvc pull
-
+# ================== RUN TESTS ==================
 .PHONY: run_unit_tests
 run_unit_tests:
 	PYTHONPATH=. pytest tests/unit/
@@ -66,10 +58,22 @@ generate_coverage_report:
 lint:
 	PYTHONPATH=. tox
 
+
+# ================== DOCKER SETUP ==================
 .PHONY: build
 build:
 	docker build -f Dockerfile . -t $(DOCKER_IMAGE):$(DOCKER_TAG)
 
+.PHONY: docker_run
+docker_run:
+	docker run -p $(APP_PORT):$(APP_PORT) -d --name goa $(DOCKER_IMAGE):$(DOCKER_TAG)
+
+.PHONY: install_c_libs
+install_c_libs:
+	apt-get update && apt-get install -y --no-install-recommends gcc ffmpeg libsm6 libxext6
+
+
+# ================== AUTOMATIC SETUP ==================
 .PHONY: deploy
 deploy:
 	ansible-playbook -i deploy/ansible/inventory.ini  deploy/ansible/deploy.yml \
@@ -84,23 +88,3 @@ deploy:
 destroy:
 	ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/destroy.yml \
 		-e host=$(DEPLOY_HOST)
-
-.PHONY: install_dvc
-install_dvc:
-	pip install dvc[ssh]==3.33.2
-
-
-.PHONY: init_dvc
-init_dvc:
-	dvc init --no-scm
-	dvc remote add --default $(DVC_REMOTE_NAME) ssh://$(DEPLOY_HOST):$(SSH_PORT)/home/$(USERNAME)/$(DVC_REMOTE_NAME)
-	dvc remote modify $(DVC_REMOTE_NAME) user $(USERNAME)
-	dvc config cache.type hardlink,symlink
-
-.PHONY: install_c_libs
-install_c_libs:
-	apt-get update && apt-get install -y --no-install-recommends gcc ffmpeg libsm6 libxext6
-
-.PHONY: docker_run
-docker_run:
-	docker run -p $(APP_PORT):$(APP_PORT) -d --name goa $(DOCKER_IMAGE):$(DOCKER_TAG)

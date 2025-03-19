@@ -2,7 +2,7 @@ title: "Test article analyzer"
 description: ""
 summary: "API service for scientific article analyser"
 version: "2025.00.1"
-terms_of_service: "Test task"
+terms_of_service: "Test task, demo"
 contact: {
     "name": "Dmitrii Iunovidov",
     "url": "https://dimyun.space/",
@@ -13,9 +13,51 @@ license_info: {
     "url": "https://spdx.org/licenses/MIT.html",
 }
 
-goa_uploader:
-  goa_path: 'data/'
+questions: [
+    'Is it any title?',
+    'Is it any authors?',
+    'Is it any abstract?',
+    'Is it any header?',
+    'Is it any footer?',
+    'Is it any paragraphs?',
+    'Is it any images?',
+    'Is it any captions?',
+    'Is it any tables?',
+    'Is it any references as single section?',
+    'Is it any standalone?',
+    'Is it any math formula?',
+    'Is it divider for main text?',
+    'Is it table of context?',
+]
+data_mask: [
+    "Title",
+    "Authors",
+    "Abstract",
+    "Header",
+    "Footer",
+    "Paragraph",
+    "Image",
+    "Caption",
+    "Tables",
+    "References",
+    "Standalone",
+    "Math",
+    "Divider",
+    "TOC",
+]
+llm_model: "llama3"
+embedding_model: "bge-m3"
+llm_template: |-
+        Answer the question based only on the context provided, each question separate with ";". 
+        IT SHOULD BE 14 ANSWERS. PLACE * SYMBOL AT THE END OF EACH ANSWER.
+        It is scientific article and you need to find specific text and image elements in it.
 
-content_process:
-  dir_path: 'api_test_dir'
-  dir_upload: 'uploaded_imgs'
+        For example:
+        Question: "Is it any data?"
+        Output: "Is it any data?; Yes *"
+        
+        Respond with ONLY questions, answers and * symbols, with no additional commentary.
+
+        Context: {context}
+
+        Question: {question}

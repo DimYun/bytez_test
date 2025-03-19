@@ -1,4 +1,5 @@
 """Module for FastAPI requests infrastructure"""
+from typing import Union
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, File, UploadFile, Request, Response, HTTPException, status
@@ -78,12 +79,15 @@ async def process_content_url(
 @inject
 async def process_rule_based(
     arxiv_url: str = 'https://arxiv.org/pdf/2101.08809',
-    in_file: UploadFile = File(None),
+    in_file: tp.Union[UploadFile, str, None] = File(
+        None,
+        description="PDF file with article data",
+    ),
     pdf_processor: ProcessPDF = Depends(Provide[Container.pdf_processor]),
 ) -> tp.Dict[str, tp.Any]:
     data_bytes = None
     pdf_name = f"{arxiv_url.split('/')[-1]}.pdf"
-    if in_file is not None:
+    if in_file is not None and not isinstance(in_file, str):
         pdf_name = in_file.filename
         data_bytes = await in_file.read()
         in_file.file.close()
@@ -105,12 +109,15 @@ async def process_rule_based(
 @inject
 async def process_tables(
     arxiv_url: str = 'https://arxiv.org/pdf/2101.08809',
-    in_file: UploadFile = File(None),
+    in_file: tp.Union[UploadFile, str, None] = File(
+        None,
+        description="PDF file with article data",
+    ),
     pdf_processor: ProcessPDF = Depends(Provide[Container.pdf_processor]),
 ) -> tp.Dict[str, tp.Any]:
     data_bytes = None
     pdf_name = f"{arxiv_url.split('/')[-1]}.pdf"
-    if in_file is not None:
+    if in_file is not None and not isinstance(in_file, str):
         pdf_name = in_file.filename
         data_bytes = await in_file.read()
         in_file.file.close()
@@ -132,11 +139,14 @@ async def process_tables(
 @inject
 async def process_llm_rag(
     arxiv_url: str = 'https://arxiv.org/pdf/2101.08809',
-    in_file: UploadFile = File(None),
+    in_file: tp.Union[UploadFile, str, None] = File(
+        None,
+        description="PDF file with article data",
+    ),
     pdf_processor: ProcessPDF = Depends(Provide[Container.pdf_processor]),
 ) -> tp.Dict[str, tp.Any]:
     pdf_url_or_filename = arxiv_url
-    if in_file is not None:
+    if in_file is not None and not isinstance(in_file, str):
         pdf_url_or_filename = in_file.filename
         async with aiofiles.open(pdf_url_or_filename, 'wb') as out_file:
             content = await in_file.read()

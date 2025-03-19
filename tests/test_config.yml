@@ -1,15 +1,28 @@
-content_process:
-  dir_path: 'api_test_dir'
-  dir_upload: 'uploaded_imgs'
+questions: [
+    'Is it any title?',
+    'Is it any authors?',
+    'Is it any images?',
+    'Is it any tables?',
+]
+data_mask: [
+    "Title",
+    "Authors",
+    "Image",
+    "Tables",
+]
+llm_model: "llama3"
+embedding_model: "bge-m3"
+llm_template: |-
+        Answer the question based only on the context provided, each question separate with ";". 
+        IT SHOULD BE 14 ANSWERS. PLACE * SYMBOL AT THE END OF EACH ANSWER.
+        It is scientific article and you need to find specific text and image elements in it.
 
-plate_model_parameters:
-  plate_checkpoint: "models/plate-model.onnx"
-  plate_img_width: 512
-  plate_img_height: 512
+        For example:
+        Question: "Is it any data?"
+        Output: "Is it any data?; Yes *"
+        
+        Respond with ONLY questions, answers and * symbols, with no additional commentary.
 
-ocr_model_parameters:
-  vocabular: "#&0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÄÅÖÜĆČĐŠŽАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ"
-  ocr_checkpoint: "models/plate-ocr-model.onnx"
-  ocr_img_width: 416
-  ocr_img_height: 64
-  text_size: 10
+        Context: {context}
+
+        Question: {question}
